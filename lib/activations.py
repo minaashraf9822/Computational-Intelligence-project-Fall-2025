@@ -1,0 +1,34 @@
+import numpy as np
+from lib.layers import Layer
+
+class Activation(Layer):
+    def __init__(self, activation, activation_prime):
+        super().__init__()
+        self.activation = activation
+        self.activation_prime = activation_prime
+
+    def forward(self, input_data):
+        self.input = input_data
+        self.output = self.activation(self.input)
+        return self.output
+
+    def backward(self, output_gradient):
+        # Element-wise multiplication: grad_output * f'(x)
+        return np.multiply(output_gradient, self.activation_prime(self.input))
+
+class Tanh(Activation):
+    def __init__(self):
+        def tanh(x):
+            return np.tanh(x)
+        def tanh_prime(x):
+            return 1 - np.tanh(x) ** 2
+        super().__init__(tanh, tanh_prime)
+
+class Sigmoid(Activation):
+    def __init__(self):
+        def sigmoid(x):
+            return 1 / (1 + np.exp(-x))
+        def sigmoid_prime(x):
+            s = sigmoid(x)
+            return s * (1 - s)
+        super().__init__(sigmoid, sigmoid_prime)
