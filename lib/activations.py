@@ -32,3 +32,13 @@ class Sigmoid(Activation):
             s = sigmoid(x)
             return s * (1 - s)
         super().__init__(sigmoid, sigmoid_prime)
+
+class ReLU(Activation):
+    def __init__(self):
+        def relu(x):
+            return np.maximum(0, x)
+
+        def relu_prime(x):
+            return (x > 0).astype(float)
+
+        super().__init__(relu, relu_prime)

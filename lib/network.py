@@ -1,3 +1,5 @@
+import numpy as np
+
 class Network:
     def __init__(self):
         self.layers = []
@@ -17,24 +19,56 @@ class Network:
         for layer in self.layers:
             output = layer.forward(output)
         return output
+    
+    def train(self, x_train, y_train, epochs, optimizer, batch_size=32):
+        # Initialize lists to store history
+        loss_history = []
+        accuracy_history = []
 
-    def train(self, x_train, y_train, epochs, optimizer):
+    def train(self, x_train, y_train, epochs, optimizer, batch_size=32):
+        loss_history = []
+        accuracy_history = []
+        
         for i in range(epochs):
-            loss_val = 0
+            # Shuffle data to prevent cycles
+            indices = np.random.permutation(len(x_train))
+            x_shuffled = x_train[indices]
+            y_shuffled = y_train[indices]
             
-            # Forward pass
-            output = self.predict(x_train)
+            epoch_loss = 0
             
-            # Calculate loss
-            loss_val = self.loss(y_train, output)
+            # Loop through the data in small batches
+            for j in range(0, len(x_train), batch_size):
+                # Create batch
+                x_batch = x_shuffled[j : j + batch_size]
+                y_batch = y_shuffled[j : j + batch_size]
+                
+                # Forward
+                output = self.predict(x_batch)
+                
+                # Backward
+                grad = self.loss_prime(y_batch, output)
+                for layer in reversed(self.layers):
+                    grad = layer.backward(grad)
+                
+                # Update
+                optimizer.step(self.layers)
+                
+                epoch_loss += self.loss(y_batch, output)
             
-            # Backward pass
-            grad = self.loss_prime(y_train, output)
-            for layer in reversed(self.layers):
-                grad = layer.backward(grad)
+            # Average loss for the epoch
+            avg_loss = epoch_loss / (len(x_train) / batch_size)
+            loss_history.append(avg_loss)
             
-            # Update weights
-            optimizer.step(self.layers)
-            
-            if (i + 1) % 100 == 0:
-                print(f"Epoch {i+1}/{epochs}, Loss: {loss_val:.6f}")
+            # Simple soft accuracy tracking
+            # (Calculated on the last batch of the epoch to save time)
+            if y_train.shape[1] == 1: # XOR or Binary
+                 acc = np.mean(np.round(output) == y_batch)
+            else: # Autoencoder (Soft Accuracy)
+                 acc = 1 - np.mean(np.abs(y_batch - output))
+            accuracy_history.append(acc)
+
+            if (i + 1) % 1 == 0:
+                print(f"Epoch {i+1}/{epochs}, Loss: {avg_loss:.4f}")
+                
+        return loss_history, accuracy_history
