@@ -62,10 +62,7 @@ class Network:
             
             # Simple soft accuracy tracking
             # (Calculated on the last batch of the epoch to save time)
-            if y_train.shape[1] == 1: # XOR or Binary
-                 acc = np.mean(np.round(output) == y_batch)
-            else: # Autoencoder (Soft Accuracy)
-                 acc = 1 - np.mean(np.abs(y_batch - output))
+            acc = 1 - np.mean(np.abs(y_batch - output))
             accuracy_history.append(acc)
 
             if (i + 1) % 1 == 0:
